@@ -1766,14 +1766,21 @@ function renderTable() {
     updatePaginationInfo();
 }
 
+// filteredData spans every page; tableBody only contains the current page.
+function getVisibleRow(item) {
+    const index = filteredData.indexOf(item) - (currentPage - 1) * pageSize;
+    if (index < 0 || index >= pageSize) return null;
+    return document.getElementById('tableBody').rows[index] || null;
+}
+
 function updateStatus(id, status, event) {
     const item = allData.find(d => d.id === id);
     if (item) {
         item.status = status;
         event.target.className = `status-select ${status}`;
-        const displayRowIndex = filteredData.indexOf(item);
-        if (displayRowIndex >= 0) {
-            document.getElementById('tableBody').rows[displayRowIndex].className = status ? `status-${status}` : '';
+        const row = getVisibleRow(item);
+        if (row) {
+            row.className = status ? `status-${status}` : '';
         }
         pushFieldsToServer(id, { status });
     }
@@ -1804,9 +1811,9 @@ function saveTestNote() {
     if (item) {
         item.test_note = note;
         pushFieldsToServer(testNoteEditingId, { test_note: note });
-        const displayRowIndex = filteredData.indexOf(item);
-        if (displayRowIndex >= 0) {
-            const noteBtn = document.getElementById('tableBody').rows[displayRowIndex].querySelector('.note-btn');
+        const row = getVisibleRow(item);
+        if (row) {
+            const noteBtn = row.querySelector('.note-btn');
             if (noteBtn) {
                 noteBtn.textContent = note ? '📝' : '📋';
                 noteBtn.title = note ? 'Có ghi chú' : 'Thêm ghi chú';
