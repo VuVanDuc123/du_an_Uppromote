@@ -1988,7 +1988,14 @@ async function refreshStatuses() {
 const PAGE_STATE_KEY = 'affiliatePageState';
 
 function savePageState() {
-    localStorage.setItem(PAGE_STATE_KEY, JSON.stringify({ pageSize, currentPage }));
+    const state = { pageSize, currentPage };
+    const minOrders = document.getElementById('minOrdersFilter').value;
+    if (minOrders !== '') state.minOrders = minOrders;
+    try {
+        localStorage.setItem(PAGE_STATE_KEY, JSON.stringify(state));
+    } catch (e) {
+        console.warn('Unable to save page preferences:', e);
+    }
 }
 
 function loadPageState() {
@@ -2097,6 +2104,12 @@ function toggleControls() {
 async function loadData() {
     setupFilters();
     const savedPage = loadPageState();
+    const savedMinOrders = savedPage.minOrders;
+    if (savedMinOrders !== undefined && savedMinOrders !== null &&
+        String(savedMinOrders).trim() !== '' &&
+        Number.isFinite(Number(savedMinOrders)) && Number(savedMinOrders) >= 0) {
+        document.getElementById('minOrdersFilter').value = String(savedMinOrders);
+    }
     if (savedPage.pageSize) document.getElementById('pageSize').value = savedPage.pageSize;
     filterAndSort();
     if (savedPage.currentPage) {
@@ -2121,7 +2134,10 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('searchBox').addEventListener('input', filterAndSort);
     document.getElementById('currencyFilter').addEventListener('change', filterAndSort);
     document.getElementById('statusFilter').addEventListener('change', filterAndSort);
-    document.getElementById('minOrdersFilter').addEventListener('input', filterAndSort);
+    document.getElementById('minOrdersFilter').addEventListener('input', () => {
+        filterAndSort();
+        savePageState();
+    });
     document.getElementById('recommendedOnlyFilter').addEventListener('change', filterAndSort);
 
     window.onclick = (event) => {
