@@ -1827,6 +1827,7 @@ function sortTable(field) {
     currentSort.direction = currentSort.field === field ? (currentSort.direction === 'asc' ? 'desc' : 'asc') : 'asc';
     currentSort.field = field;
     filterAndSort();
+    savePageState();
 }
 
 function resetFilters() {
@@ -1986,9 +1987,17 @@ async function refreshStatuses() {
 }
 
 const PAGE_STATE_KEY = 'affiliatePageState';
+const PERSISTED_SORT_FIELDS = new Set([
+    'recommend_score', 'offer_score', 'total_order_last_seven_day',
+    'approval_rate', 'payout_rate', 'currency', 'commission', 'cookie',
+    'application_review'
+]);
 
 function savePageState() {
     const state = { pageSize, currentPage };
+    if (PERSISTED_SORT_FIELDS.has(currentSort.field)) {
+        state.sort = { ...currentSort };
+    }
     const minOrders = document.getElementById('minOrdersFilter').value;
     if (minOrders !== '') state.minOrders = minOrders;
     try {
@@ -2104,6 +2113,10 @@ function toggleControls() {
 async function loadData() {
     setupFilters();
     const savedPage = loadPageState();
+    if (savedPage.sort && PERSISTED_SORT_FIELDS.has(savedPage.sort.field) &&
+        ['asc', 'desc'].includes(savedPage.sort.direction)) {
+        currentSort = { field: savedPage.sort.field, direction: savedPage.sort.direction };
+    }
     const savedMinOrders = savedPage.minOrders;
     if (savedMinOrders !== undefined && savedMinOrders !== null &&
         String(savedMinOrders).trim() !== '' &&
